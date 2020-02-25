@@ -18,7 +18,7 @@ def get_total_pages(html):
 
 def write_csv(data):
     with open('data.csv', 'a') as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=',')
         writer.writerow((data['title'], data['email']))
 
 
