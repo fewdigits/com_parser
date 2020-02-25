@@ -24,18 +24,18 @@ def get_total_pages(html):
                 pages += 1
             else:
                 continue
-        return pages + 1
+        return pages + 2
     else:
         return 0
 
 
-def write_csv(data):
-    with open('data.csv', 'a') as f:
+def write_csv(filename, data):
+    with open(f'csv/{filename}.csv', 'a') as f:
         writer = csv.writer(f, delimiter=',')
         writer.writerow((data['title'], data['email']))
 
 
-def get_page_data(html):
+def get_page_data(html, filename):
     soup = BeautifulSoup(html, 'lxml')
     divs = soup.find_all('div', class_='anryblimg2')
     for div in divs:
@@ -48,25 +48,42 @@ def get_page_data(html):
                 email = 'missing'
         data = {'title': title, 'email': email}
         if email != 'missing':
-            write_csv(data)
+            write_csv(filename, data)
         else:
             continue
 
 
-def main():
-    base_url = 'https://cheb.ru/reklama.htm'
+def get_data(url, filename):
+    base_url = 'https://cheb.ru'
     page_part = '?page='
-    total_pages = get_total_pages(get_html(base_url))
-    print(total_pages)
-
+    total_pages = get_total_pages(get_html(base_url + url))
     if total_pages > 0:
         for i in range(1, total_pages):
-            url = base_url + page_part + str(i)
-            html = get_html(url)
-            get_page_data(html)
+            url_gen = base_url + url + page_part + str(i)
+            html = get_html(url_gen)
+            get_page_data(html, filename)
     else:
         html = get_html(base_url)
-        get_page_data(html)
+        get_page_data(html, filename)
+
+
+def main():
+    href = []
+    header = []
+    soup = BeautifulSoup(get_html('https://cheb.ru/spravka/'), 'lxml')
+    divs = soup.find_all('div', class_='bl2 blpad bla')
+    for div in divs:
+        links = div.find_all('a')
+        for link in links:
+            if link['href'].startswith('http') or link['href'].endswith('/'):
+                continue
+            href.append(link['href'])
+            header.append(link.text.strip())
+
+    info = list(zip(href, header))
+
+    for item in info:
+        get_data(item[0], item[1])
 
 
 if __name__ == '__main__':
