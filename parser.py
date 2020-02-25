@@ -12,8 +12,21 @@ def get_html(url):
 def get_total_pages(html):
     soup = BeautifulSoup(html, 'lxml')
     divs = soup.find('div', class_='link_bar')
-    pages = divs.find_all('span', class_='pagelink')
-    return len(pages) + 1
+    span = soup.find('span', class_='pagelinklast')
+    pages = 0
+    if span:
+        pages = span.find('a').text.strip()
+        return int(pages)
+    elif divs:
+        links = divs.find_all('a')
+        for link in links:
+            if link['href'].startswith('?page'):
+                pages += 1
+            else:
+                continue
+        return pages + 1
+    else:
+        return 0
 
 
 def write_csv(data):
@@ -41,13 +54,18 @@ def get_page_data(html):
 
 
 def main():
-    base_url = 'https://cheb.ru/unitar.htm'
+    base_url = 'https://cheb.ru/reklama.htm'
     page_part = '?page='
     total_pages = get_total_pages(get_html(base_url))
+    print(total_pages)
 
-    for i in range(1, total_pages):
-        url = base_url + page_part + str(i)
-        html = get_html(url)
+    if total_pages > 0:
+        for i in range(1, total_pages):
+            url = base_url + page_part + str(i)
+            html = get_html(url)
+            get_page_data(html)
+    else:
+        html = get_html(base_url)
         get_page_data(html)
 
 
